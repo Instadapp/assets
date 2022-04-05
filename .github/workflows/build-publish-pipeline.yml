@@ -30,9 +30,14 @@ jobs:
           set -e
           set -o pipefail
 
-          sudo apt update -y
           # Install rclone
-          sudo apt install rclone -y
+          curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+          unzip rclone-current-linux-amd64.zip
+          cd rclone-*-linux-amd64
+
+          sudo cp rclone /usr/bin/
+          sudo chown root:root /usr/bin/rclone
+          sudo chmod 755 /usr/bin/rclone
 
           # Create a S3 target
           rclone config create s3 s3 provider=DigitalOcean env_auth=true region=fra1 endpoint=fra1.digitaloceanspaces.com acl=public-read
