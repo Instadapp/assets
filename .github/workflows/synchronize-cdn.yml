@@ -53,11 +53,4 @@ jobs:
           # SYNC
           rclone sync -P . s3:$CDN_BUCKET/
 
-      - name: Purge cache
-        run: |
-          #!/bin/bash
-
-          set -e
-          set -o pipefail
-
-          # TODO
+          rclone config delete s3
