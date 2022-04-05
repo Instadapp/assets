@@ -11,7 +11,7 @@ env:
 
 jobs:
   sync_with_cdn:
-    name: Build Mainnet Image
+    name: Synchronize with CDN
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,9 +30,9 @@ jobs:
           set -e
           set -o pipefail
 
-          apt update -y
+          sudo apt update -y
           # Install rclone
-          apt install rclone -y
+          sudo apt install rclone -y
 
           # Create a S3 target
           rclone config create s3 s3 provider=DigitalOcean env_auth=true region=fra1 endpoint=fra1.digitaloceanspaces.com acl=public-read
