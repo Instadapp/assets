@@ -30,20 +30,25 @@ jobs:
           set -e
           set -o pipefail
 
+          CURRENT_DIR=$(pwd)
+
           # Install rclone
+          TMPDIR=$(mktemp -d)
+          cd $TMPDIR
           curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
           unzip rclone-current-linux-amd64.zip
           cd rclone-*-linux-amd64
-
           sudo cp rclone /usr/bin/
           sudo chown root:root /usr/bin/rclone
           sudo chmod 755 /usr/bin/rclone
+
+          cd $CURRENT_DIR
 
           # Create a S3 target
           rclone config create s3 s3 provider=DigitalOcean env_auth=true region=fra1 endpoint=fra1.digitaloceanspaces.com acl=public-read
 
           # remove `.github` and any other paths we do not want in the CDN
-          rm -rf .github
+          rm -rf .github .git
 
           # SYNC
           rclone sync -P . s3:$CDN_BUCKET/
