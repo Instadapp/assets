@@ -24,6 +24,8 @@ jobs:
           AWS_ACCESS_KEY: ${{ secrets.CDN_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CDN_SECRET_KEY }}
           CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
+          DO_TOKEN: ${{ secrets.DO_TOKEN }}
+          CDN_ID: ${{ secrets.CDN_ID }}
         run: |
           #!/bin/bash
 
@@ -54,3 +56,6 @@ jobs:
           rclone sync -P . s3:$CDN_BUCKET/
 
           rclone config delete s3
+
+          # Wipe out DigitalOcean CDN cache
+          curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
