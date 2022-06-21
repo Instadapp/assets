@@ -52,10 +52,14 @@ jobs:
           # remove `.github` and any other paths we do not want in the CDN
           rm -rf .github .git
 
-          # SYNC
-          rclone sync -P . s3:$CDN_BUCKET/
+          # Synchronize the `icons` directory
+          # Note: This command should be added for any new directories in this repo
+          # otherwise, they'll not be synced
+          rclone sync icons s3:$CDN_BUCKET/icons
 
           rclone config delete s3
 
           # Wipe out DigitalOcean CDN cache
-          curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
+          # Note: This command should be added for any new directories in this repo
+          # otherwise, cache for those directories will not be cleared
+          curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["icons/*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
