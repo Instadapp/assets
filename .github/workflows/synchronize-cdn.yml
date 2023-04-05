@@ -52,9 +52,18 @@ jobs:
           # remove `.github` and any other paths we do not want in the CDN
           rm -rf .github .git
 
+          # Note all the files that are missing in cdn, missing in repo or they are different
+          echo "Checking files"
+          (rclone check s3:$CDN_BUCKET/icons icons --download --combined /tmp/diff || true)
+
+          # List all files that are different
+          echo "Listing all differences"
+          cat /tmp/diff | grep --quiet --invert-match '^=' || echo "No changes"
+
           # Synchronize the `icons` directory
           # Note: This command should be added for any new directories in this repo
           # otherwise, they'll not be synced
+          echo "Syncing files"
           rclone sync icons s3:$CDN_BUCKET/icons
 
           rclone config delete s3
@@ -63,3 +72,12 @@ jobs:
           # Note: This command should be added for any new directories in this repo
           # otherwise, cache for those directories will not be cleared
           curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["icons/*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
+
+          # Purge each entry in /tmp/diff from cloudflare's cache
+          cat /tmp/diff | grep --quiet --invert-match '^=' || true | while read line;
+          do
+            entry=$(echo $line | awk '{print $2}');
+            url="https://cdn.instadapp.io/icons/${entry}"
+            echo "Clearing $url from cache"
+            curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_KEY }}" -H "Content-Type: application/json" --data "{\"files\": [\"$url\"]}"
+          done;
