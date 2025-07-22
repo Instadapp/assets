@@ -1,0 +1,83 @@
+name: Synchronize with CDN
+
+on:
+  push:
+    branches:
+      - "master"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  sync_with_cdn:
+    name: Synchronize with CDN
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Synchronize with CDN
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.CDN_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.CDN_SECRET_KEY }}
+          CDN_BUCKET: ${{ secrets.CDN_BUCKET }}
+          DO_TOKEN: ${{ secrets.DO_TOKEN }}
+          CDN_ID: ${{ secrets.CDN_ID }}
+        run: |
+          #!/bin/bash
+
+          set -e
+          set -o pipefail
+
+          CURRENT_DIR=$(pwd)
+
+          # Install rclone
+          TMPDIR=$(mktemp -d)
+          cd $TMPDIR
+          curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+          unzip rclone-current-linux-amd64.zip
+          cd rclone-*-linux-amd64
+          sudo cp rclone /usr/bin/
+          sudo chown root:root /usr/bin/rclone
+          sudo chmod 755 /usr/bin/rclone
+
+          cd $CURRENT_DIR
+
+          # Create a S3 target
+          rclone config create s3 s3 provider=DigitalOcean env_auth=true region=fra1 endpoint=fra1.digitaloceanspaces.com acl=public-read
+
+          # remove `.github` and any other paths we do not want in the CDN
+          rm -rf .github .git
+
+          # Note all the files that are missing in cdn, missing in repo or they are different
+          echo "Checking files"
+          (rclone check s3:$CDN_BUCKET/solana solana --download --combined /tmp/diff || true)
+
+          # List all files that are different
+          echo "Listing all differences"
+          cat /tmp/diff | grep --quiet --invert-match '^=' || echo "No changes"
+
+          # Synchronize the `solana` directory
+          # Note: This command should be added for any new directories in this repo
+          # otherwise, they'll not be synced
+          echo "Syncing files"
+          rclone sync solana s3:$CDN_BUCKET/solana
+
+          rclone config delete s3
+
+          # Wipe out DigitalOcean CDN cache
+          # Note: This command should be added for any new directories in this repo
+          # otherwise, cache for those directories will not be cleared
+          curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["solana/*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
+
+          # Purge each entry in /tmp/diff from cloudflare's cache
+          cat /tmp/diff | grep --quiet --invert-match '^=' || true | while read line;
+          do
+            entry=$(echo $line | awk '{print $2}');
+            url="https://cdn.instadapp.io/solana/${entry}"
+            echo "Clearing $url from cache"
+            curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_KEY }}" -H "Content-Type: application/json" --data "{\"files\": [\"$url\"]}"
+          done;
