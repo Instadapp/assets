@@ -1,4 +1,4 @@
-name: Synchronize with CDN
+name: Synchronize with CDN - Solana
 
 on:
   push:
