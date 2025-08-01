@@ -1,6 +1,6 @@
 {
-  "name": "fEURC",
-  "symbol": "fEURC",
-  "description": "Fluid lending eurc token.",
+  "name": "Jupiter Lend EURC",
+  "symbol": "jlEURC",
+  "description": "Jupiter Lend eurc token.",
   "image": "https://cdn.instadapp.io/solana/tokens/icons/eurc.png"
 }

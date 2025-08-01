@@ -1,6 +1,6 @@
 {
-  "name": "fSOL",
-  "symbol": "fSOL",
-  "description": "Fluid lending sol token.",
+  "name": "Jupiter Lend WSOL",
+  "symbol": "jlWSOL",
+  "description": "Jupiter Lend wsol token.",
   "image": "https://cdn.instadapp.io/solana/tokens/icons/sol.png"
 }

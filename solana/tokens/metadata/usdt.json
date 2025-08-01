@@ -1,6 +1,6 @@
 {
-  "name": "fUSDT",
-  "symbol": "fUSDT",
-  "description": "Fluid lending usdt token.",
+  "name": "Jupiter Lend USDT",
+  "symbol": "jlUSDT",
+  "description": "Jupiter Lend usdt token.",
   "image": "https://cdn.instadapp.io/solana/tokens/icons/usdt.png"
 }
