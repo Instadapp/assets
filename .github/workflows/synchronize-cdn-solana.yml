@@ -31,7 +31,6 @@ jobs:
 
           set -e
           set -o pipefail
-          trap 'echo "❌ Failed at line $LINENO: $BASH_COMMAND"; exit 1' ERR
 
           CURRENT_DIR=$(pwd)
 
@@ -72,9 +71,11 @@ jobs:
           # Wipe out DigitalOcean CDN cache
           # Note: This command should be added for any new directories in this repo
           # otherwise, cache for those directories will not be cleared
+          echo "Wiping out DigitalOcean CDN cache"
           curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_TOKEN" -d '{"files": ["solana/*"]}' https://api.digitalocean.com/v2/cdn/endpoints/$CDN_ID/cache
 
           # Purge each entry in /tmp/diff from cloudflare's cache
+          echo "Purging Cloudflare cache"
           cat /tmp/diff | grep --quiet --invert-match '^=' || true | while read line;
           do
             entry=$(echo $line | awk '{print $2}');
