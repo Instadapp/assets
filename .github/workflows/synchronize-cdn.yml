@@ -31,6 +31,7 @@ jobs:
 
           set -e
           set -o pipefail
+          trap 'echo "❌ Failed at line $LINENO: $BASH_COMMAND"; exit 1' ERR
 
           CURRENT_DIR=$(pwd)
 
